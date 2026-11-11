@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบยืม-คืนอุปกรณ์กีฬา</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f7f9;--line:#e5e7eb;--text:#111827;--mute:#6b7280;--pri:#2563eb;--pri-d:#1d4ed8;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Noto Sans Thai',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.55}
+.top{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.bar{max-width:1040px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px}
+nav{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+nav button{border:0;background:none;padding:8px 14px;border-radius:8px;color:var(--mute);font:inherit;cursor:pointer}
+nav button:hover{background:#f3f4f6}nav button.on{background:#eff6ff;color:var(--pri);font-weight:600}
+.user{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mute)}
+main{max-width:1040px;margin:0 auto;padding:28px 20px 60px}
+h2{font-size:22px;margin:0 0 4px}h3{font-size:17px;margin:0 0 14px}
+.sub,.mute{color:var(--mute)}.sub{margin:0 0 24px}.mute{font-size:13px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}
+.card+.card{margin-top:20px}
+.grid>.card{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.item{display:flex;flex-direction:column;gap:4px}
+.item .ic{font-size:30px;line-height:1.2}.item h4{margin:4px 0 0;font-size:16px}
+.item .btn{margin-top:12px}
+.stock{font-size:14px;margin-top:6px;font-weight:500}
+.t-ok{color:var(--ok)}.t-warn{color:var(--warn)}.t-bad{color:var(--bad)}
+.btn{border:0;background:var(--pri);color:#fff;font:inherit;font-weight:600;padding:9px 16px;border-radius:10px;cursor:pointer}
+.btn:hover{background:var(--pri-d)}.btn:disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}.btn.ghost:hover{background:#f9fafb}
+.btn.sm{padding:6px 12px;font-size:13px}.btn.block{width:100%}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+input{width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:10px;font:inherit;background:#fff}
+input:focus{outline:2px solid #bfdbfe;border-color:var(--pri)}
+input[readonly]{background:#f9fafb;color:#374151}
+input[type=checkbox]{width:auto}
+.f{margin-bottom:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.acc{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:14px;color:var(--text);margin:0}
+.scroll{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;color:var(--mute);font-weight:500;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px;border-bottom:1px solid #f3f4f6;vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.b-ok{background:#dcfce7;color:#166534}.b-late{background:#fee2e2;color:#991b1b}.b-done{background:#f3f4f6;color:#4b5563}.b-pri{background:#eff6ff;color:var(--pri)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px}
+.stats b{display:block;font-size:26px;margin-top:2px}
+.auth{max-width:400px;margin:32px auto}
+.err{color:var(--bad);font-size:13px;margin:0 0 12px}
+.link{border:0;background:none;color:var(--pri);font:inherit;cursor:pointer;padding:0}.link:hover{text-decoration:underline}
+.modal{position:fixed;inset:0;background:rgba(17,24,39,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal.open{display:flex}
+.sheet{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:92vh;overflow:auto}
+.total{display:flex;justify-content:space-between;background:#f9fafb;border-radius:10px;padding:12px 14px;margin:14px 0;font-weight:600}
+.actions{display:flex;justify-content:flex-end;gap:10px}
+ul.cols{margin:0;padding-left:18px;color:#374151;font-size:14px}
+.empty{text-align:center;color:var(--mute);padding:28px 0}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header class="top"><div class="bar">
+  <div class="brand">⚽ ระบบยืม-คืนอุปกรณ์กีฬา</div>
+  <nav id="nav"></nav>
+  <div id="userbox" class="user"></div>
+</div></header>
+
+<main id="app"></main>
+
+<div id="modal" class="modal"><div class="sheet">
+  <h3>ยืมอุปกรณ์</h3>
+  <form id="borrowForm">
+    <div class="row f"><div><label>อุปกรณ์</label><input id="mItem" readonly></div><div><label>จำนวน</label><input id="mQty" type="number" min="1" value="1" required></div></div>
+    <div class="f"><label>ผู้ยืม</label><input id="mUser" readonly></div>
+    <div class="f"><label>อุปกรณ์เสริม (ไม่บังคับ)</label><div id="mAcc"></div></div>
+    <div class="row f"><div><label>วันที่ยืม</label><input id="mFrom" type="date" required></div><div><label>กำหนดคืน</label><input id="mDue" type="date" required></div></div>
+    <div class="total"><span>ค่ามัดจำรวม</span><span id="mPrice">฿0</span></div>
+    <p id="mErr" class="err hide"></p>
+    <div class="actions"><button type="button" class="btn ghost" onclick="closeModal()">ยกเลิก</button><button class="btn">ยืนยันการยืม</button></div>
+  </form>
+</div></div>
+
+<script>
+/* ===== ฐานข้อมูลจำลอง (localStorage) 5 ตาราง: members, equipments, borrows(+items), returns ===== */
+const K = 'sbs_db_v3', FINE = 10; // ค่าปรับ บาท/วัน/ชิ้น
+let db = null, view = 'home', authMode = 'login', curEq = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = () => new Date().toISOString().slice(0, 10);
+const me = () => db.members.find(m => m.id === db.session);
+const eqOf = id => db.equipments.find(e => e.id === id);
+const memOf = id => db.members.find(m => m.id === id);
+const mains = () => db.equipments.filter(e => e.type === 'main');
+const save = () => { try { localStorage.setItem(K, JSON.stringify(db)); } catch (e) {} };
+const daysLate = due => Math.max(0, Math.floor((new Date(today()) - new Date(due)) / 864e5));
+const mainQty = b => b.items.filter(i => eqOf(i.e).type === 'main').reduce((t, i) => t + i.q, 0);
+
+async function hash(s) {
+  try {
+    const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('sbs:' + s));
+    return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+  } catch (e) { let h = 0; for (const c of 'sbs:' + s) h = (h * 31 + c.charCodeAt(0)) | 0; return 'f' + h; }
+}
+async function seed() {
+  const hA = await hash('admin1234'), hM = await hash('member1234');
+  return {
+    session: null,
+    members: [
+      {id:1, username:'admin',   password_hash:hA, first_name:'ผู้ดูแล', last_name:'ระบบ', student_code:'-',      phone:'-',          role:'admin'},
+      {id:2, username:'somchai', password_hash:hM, first_name:'สมชาย',  last_name:'ใจดี',  student_code:'68010111', phone:'0811111111', role:'member'},
+      {id:3, username:'wichai',  password_hash:hM, first_name:'วิชัย',  last_name:'รักเรียน', student_code:'68010255', phone:'0822222222', role:'member'}
+    ],
+    equipments: [
+      {id:1, type:'main', icon:'⚽', name:'ลูกฟุตบอลมาตรฐาน', category:'ฟุตบอล', total:9, avail:8, deposit:50},
+      {id:2, type:'main', icon:'🏀', name:'ลูกบาสเกตบอล', category:'บาสเกตบอล', total:5, avail:5, deposit:60},
+      {id:3, type:'main', icon:'🏐', name:'ลูกวอลเลย์บอล', category:'วอลเลย์บอล', total:6, avail:6, deposit:45},
+      {id:4, type:'main', icon:'🏸', name:'ไม้แบดมินตัน (คู่)', category:'แบดมินตัน', total:2, avail:2, deposit:40},
+      {id:5, type:'main', icon:'🎾', name:'ลูกเทนนิส (แพ็ก 3 ลูก)', category:'เทนนิส', total:10, avail:10, deposit:30},
+      {id:6, type:'main', icon:'🏓', name:'ไม้ปิงปอง + ลูกปิงปอง', category:'ปิงปอง', total:7, avail:7, deposit:35},
+      {id:7, type:'accessory', icon:'🔧', name:'สูบลมพกพา', category:'อุปกรณ์เสริม', total:5, avail:5, deposit:10},
+      {id:8, type:'accessory', icon:'🔧', name:'กรวยฝึกซ้อมวิ่ง 4 ชิ้น', category:'อุปกรณ์เสริม', total:5, avail:5, deposit:20},
+      {id:9, type:'accessory', icon:'🔧', name:'สายรัดข้อมือกีฬา', category:'อุปกรณ์เสริม', total:5, avail:5, deposit:15}
+    ],
+    borrows: [
+      {id:'B20260901', member:2, items:[{e:1,q:1}], from:'2026-10-15', due:'2026-10-18', deposit:50, status:'borrowing'},
+      {id:'B20260902', member:3, items:[{e:3,q:1}], from:'2026-10-10', due:'2026-10-13', deposit:45, status:'returned'}
+    ],
+    returns: [{id:1, borrow:'B20260902', date:'2026-10-13', status:'normal', fine:0, by:1}]
+  };
+}
+
+/* ===== Auth ===== */
+async function doLogin(e) {
+  e.preventDefault();
+  const u = $('lUser').value.trim(), h = await hash($('lPass').value);
+  const m = db.members.find(x => x.username === u && x.password_hash === h);
+  if (!m) return authErr('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+  db.session = m.id; save(); view = 'home'; render();
+}
+async function doRegister(e) {
+  e.preventDefault();
+  const v = id => $(id).value.trim(), u = v('rUser'), pw = $('rPass').value;
+  if (!/^[A-Za-z0-9_]{4,20}$/.test(u)) return authErr('ชื่อผู้ใช้ต้องเป็น a-z, 0-9 หรือ _ ยาว 4-20 ตัว');
+  if (pw.length < 6) return authErr('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
+  if (pw !== $('rPass2').value) return authErr('รหัสผ่านสองช่องไม่ตรงกัน');
+  if (!/^0\d{8,9}$/.test(v('rPhone'))) return authErr('เบอร์โทรต้องเป็นตัวเลข 9-10 หลัก ขึ้นต้นด้วย 0');
+  if (db.members.some(m => m.username === u)) return authErr('ชื่อผู้ใช้นี้ถูกใช้แล้ว');
+  if (db.members.some(m => m.student_code === v('rCode'))) return authErr('รหัสนักศึกษานี้สมัครไปแล้ว');
+  const m = {id: db.members.reduce((x, r) => Math.max(x, r.id), 0) + 1, username:u, password_hash: await hash(pw),
+    first_name:v('rFirst'), last_name:v('rLast'), student_code:v('rCode'), phone:v('rPhone'), role:'member'};
+  db.members.push(m); db.session = m.id; save(); view = 'home'; render();
+}
+function logout() { db.session = null; save(); authMode = 'login'; render(); }
+function authErr(t) { const el = $('aErr'); el.textContent = t; el.classList.remove('hide'); }
+function setMode(m) { authMode = m; render(); }
+function authHTML() {
+  const reg = authMode === 'register';
+  const f = (id, label, type = 'text') => `<div class="f"><label>${label}</label><input id="${id}" type="${type}" required></div>`;
+  return `<div class="card auth"><h2>${reg ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}</h2>
+    <p class="sub">${reg ? 'กรอกข้อมูลเพื่อสร้างบัญชี' : 'เข้าสู่ระบบเพื่อยืมอุปกรณ์กีฬา'}</p>
+    <form onsubmit="${reg ? 'doRegister' : 'doLogin'}(event)">
+      ${reg ? `<div class="row">${f('rFirst','ชื่อ')}${f('rLast','นามสกุล')}</div>${f('rCode','รหัสนักศึกษา')}${f('rPhone','เบอร์โทร','tel')}${f('rUser','ชื่อผู้ใช้')}${f('rPass','รหัสผ่าน (6 ตัวขึ้นไป)','password')}${f('rPass2','ยืนยันรหัสผ่าน','password')}`
+      : `${f('lUser','ชื่อผู้ใช้')}${f('lPass','รหัสผ่าน','password')}`}
+      <p id="aErr" class="err hide"></p>
+      <button class="btn block">${reg ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}</button>
+    </form>
+    <p class="mute" style="text-align:center;margin:16px 0 0">${reg ? 'มีบัญชีแล้ว?' : 'ยังไม่มีบัญชี?'}
+      <button class="link" onclick="setMode('${reg ? 'login' : 'register'}')">${reg ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}</button></p></div>`;
+}
+
+/* ===== Views ===== */
+function statusBadge(b) {
+  if (b.status === 'returned') return '<span class="badge b-done">คืนแล้ว</span>';
+  return b.due < today() ? '<span class="badge b-late">เกินกำหนด</span>' : '<span class="badge b-ok">กำลังยืม</span>';
+}
+function borrowLabel(b) {
+  return b.items.map(i => { const e = eqOf(i.e);
+    return e.type === 'main' ? `${esc(e.name)} ×${i.q}` : `<div class="mute">+ ${esc(e.name)} ×${i.q}</div>`; }).join('');
+}
+function homeHTML() {
+  return `<h2>รายการอุปกรณ์</h2><p class="sub">เลือกอุปกรณ์ที่ต้องการ ระบบจะตัดสต็อกให้ทันทีเมื่อยืนยันการยืม</p>
+  <div class="grid">${mains().map(e => {
+    const c = e.avail === 0 ? 't-bad' : e.avail <= 2 ? 't-warn' : 't-ok';
+    const note = e.avail === 0 ? 'หมด' : e.avail <= 2 ? 'เหลือน้อย' : 'พร้อมให้ยืม';
+    return `<div class="card item"><div class="ic">${e.icon}</div><h4>${esc(e.name)}</h4>
+      <div class="mute">${esc(e.category)} · มัดจำ ฿${e.deposit}</div>
+      <div class="stock ${c}">คงเหลือ ${e.avail}/${e.total} · ${note}</div>
+      <button class="btn" ${e.avail === 0 ? 'disabled' : ''} onclick="openModal(${e.id})">${e.avail === 0 ? 'ของหมด' : 'ยืม'}</button></div>`;
+  }).join('')}</div>`;
+}
+function historyHTML() {
+  const u = me(), rows = db.borrows.filter(b => u.role === 'admin' || b.member === u.id).slice().reverse();
+  return `<h2>${u.role === 'admin' ? 'ประวัติการยืมทั้งหมด' : 'ประวัติการยืมของฉัน'}</h2><p class="sub">รายการยืม-คืนทั้งหมดและสถานะล่าสุด</p>
+  <div class="card scroll"><table class="tbl"><thead><tr><th>รหัส</th><th>ผู้ยืม</th><th>อุปกรณ์</th><th>ช่วงเวลา</th><th>มัดจำ</th><th>สถานะ</th></tr></thead><tbody>
+  ${rows.map(b => { const m = memOf(b.member); return `<tr><td>${b.id}</td><td>${esc(m.first_name + ' ' + m.last_name)}</td><td>${borrowLabel(b)}</td>
+  <td class="mute">${b.from} → ${b.due}</td><td>฿${b.deposit}</td><td>${statusBadge(b)}</td></tr>`; }).join('')
+  || '<tr><td colspan="6" class="empty">ยังไม่มีรายการยืม</td></tr>'}</tbody></table></div>`;
+}
+function adminHTML() {
+  const act = db.borrows.filter(b => b.status === 'borrowing'), late = act.filter(b => b.due < today()).length;
+  const m = mains(), st = (l, v) => `<div class="card"><span class="mute">${l}</span><b>${v}</b></div>`;
+  return `<h2>จัดการระบบ</h2><p class="sub">ภาพรวมและรับคืนอุปกรณ์</p>
+  <div class="stats">${st('รายการยืมทั้งหมด', db.borrows.length)}${st('อุปกรณ์ว่าง', m.reduce((s, e) => s + e.avail, 0) + '/' + m.reduce((s, e) => s + e.total, 0))}
+  ${st('สมาชิก', db.members.filter(x => x.role === 'member').length)}${st('เกินกำหนดคืน', late)}</div>
+  <div class="card scroll"><h3>รอรับคืน</h3><table class="tbl"><thead><tr><th>รหัส</th><th>ผู้ยืม</th><th>อุปกรณ์</th><th>กำหนดคืน</th><th>ค่าปรับ</th><th></th></tr></thead><tbody>
+  ${act.map(b => { const u = memOf(b.member), f = daysLate(b.due) * FINE * mainQty(b); return `<tr><td>${b.id}</td><td>${esc(u.first_name + ' ' + u.last_name)}</td><td>${borrowLabel(b)}</td>
+  <td>${b.due} ${statusBadge(b)}</td><td class="${f ? 't-bad' : ''}">฿${f}</td><td><button class="btn sm" onclick="returnItem('${b.id}')">รับคืน</button></td></tr>`; }).join('')
+  || '<tr><td colspan="6" class="empty">ไม่มีรายการค้างคืน</td></tr>'}</tbody></table></div>
+  <div class="card scroll"><h3>บันทึกการคืน</h3><table class="tbl"><thead><tr><th>#</th><th>รหัสยืม</th><th>วันที่คืน</th><th>สถานะ</th><th>ค่าปรับ</th><th>ผู้รับคืน</th></tr></thead><tbody>
+  ${db.returns.slice().reverse().map(r => `<tr><td>${r.id}</td><td>${r.borrow}</td><td>${r.date}</td><td>${r.status === 'normal' ? 'คืนปกติ' : '<span class="t-bad">เลยกำหนด</span>'}</td><td>฿${r.fine}</td><td>${esc(memOf(r.by).username)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+const SCHEMA = [
+  ['members', 'สมาชิก', ['member_id PK','username UNIQUE','password_hash','first_name, last_name','student_code UNIQUE','phone','role (member/admin)']],
+  ['equipments', 'อุปกรณ์ (หลัก + เสริม)', ['equipment_id PK','equipment_name','category','equipment_type (main/accessory)','total_qty','available_qty','deposit_price']],
+  ['borrow_transactions', 'ใบยืม', ['borrow_id PK','member_id FK → members','borrow_date, due_date','deposit_total','status']],
+  ['borrow_items', 'รายการอุปกรณ์ในใบยืม (M:N)', ['borrow_id FK → borrow_transactions','equipment_id FK → equipments','quantity','PK (borrow_id, equipment_id)']],
+  ['return_logs', 'บันทึกการคืน', ['return_id PK','borrow_id FK UNIQUE','actual_return_date','status (normal/overdue)','fine_amount','received_by FK → members']]
+];
+function schemaHTML() {
+  return `<h2>โครงสร้างฐานข้อมูล ${SCHEMA.length} ตาราง</h2>
+  <p class="sub">members 1—N borrow_transactions · borrow_transactions 1—1 return_logs · borrow_transactions M—N equipments (ผ่าน borrow_items)</p>
+  <div class="grid">${SCHEMA.map(t => `<div class="card"><h3><code>${t[0]}</code></h3><div class="mute" style="margin:-8px 0 10px">${t[1]}</div>
+  <ul class="cols">${t[2].map(c => `<li>${c}</li>`).join('')}</ul></div>`).join('')}</div>`;
+}
+
+/* ===== Render ===== */
+function go(v) { view = v; render(); }
+function render() {
+  const u = db && me();
+  if (!u) { $('nav').innerHTML = ''; $('userbox').innerHTML = ''; $('app').innerHTML = authHTML(); return; }
+  const tabs = [['home','อุปกรณ์'], ['history','ประวัติ']];
+  if (u.role === 'admin') tabs.push(['admin','จัดการระบบ']);
+  tabs.push(['schema','ฐานข้อมูล']);
+  if (!tabs.some(t => t[0] === view)) view = 'home';
+  $('nav').innerHTML = tabs.map(t => `<button class="${t[0] === view ? 'on' : ''}" onclick="go('${t[0]}')">${t[1]}</button>`).join('');
+  $('userbox').innerHTML = `<span>${esc(u.first_name)} ${esc(u.last_name)} <span class="badge b-pri">${u.role === 'admin' ? 'ผู้ดูแล' : 'สมาชิก'}</span></span><button class="btn ghost sm" onclick="logout()">ออกจากระบบ</button>`;
+  $('app').innerHTML = ({home: homeHTML, history: historyHTML, admin: adminHTML, schema: schemaHTML})[view]();
+}
+
+/* ===== ยืม / คืน ===== */
+function calcPrice() {
+  let t = eqOf(curEq).deposit * (parseInt($('mQty').value) || 0);
+  document.querySelectorAll('#mAcc input:checked').forEach(c => t += parseInt(c.dataset.price));
+  $('mPrice').textContent = '฿' + t; return t;
+}
+function openModal(id) {
+  curEq = id; const e = eqOf(id), u = me();
+  $('mItem').value = e.name; $('mUser').value = `${u.first_name} ${u.last_name} (${u.student_code})`;
+  $('mQty').value = 1; $('mQty').max = e.avail;
+  $('mFrom').value = today(); $('mFrom').min = today(); $('mDue').value = ''; $('mDue').min = today();
+  $('mAcc').innerHTML = db.equipments.filter(a => a.type === 'accessory').map(a => `<label class="acc" style="${a.avail ? '' : 'opacity:.4'}">
+    <input type="checkbox" value="${a.id}" data-price="${a.deposit}" ${a.avail ? '' : 'disabled'}> ${esc(a.name)} <span class="mute">+฿${a.deposit} · เหลือ ${a.avail}</span></label>`).join('');
+  $('mErr').classList.add('hide'); calcPrice(); $('modal').classList.add('open');
+}
+function closeModal() { $('modal').classList.remove('open'); }
+$('mQty').addEventListener('input', calcPrice);
+$('mAcc').addEventListener('change', calcPrice);
+$('mFrom').addEventListener('change', () => { $('mDue').min = $('mFrom').value; });
+$('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+$('borrowForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const eq = eqOf(curEq), qty = parseInt($('mQty').value), from = $('mFrom').value, due = $('mDue').value;
+  const err = t => { $('mErr').textContent = t; $('mErr').classList.remove('hide'); };
+  if (!(qty >= 1)) return err('จำนวนต้องอย่างน้อย 1 ชิ้น');
+  if (qty > eq.avail) return err(`สต็อกไม่พอ เหลือ ${eq.avail} ชิ้น`);
+  if (from < today()) return err('วันที่ยืมต้องไม่ย้อนหลัง');
+  if (due < from) return err('กำหนดคืนต้องไม่ก่อนวันที่ยืม');
+  const items = [{e: eq.id, q: qty}, ...[...document.querySelectorAll('#mAcc input:checked')].map(c => ({e: parseInt(c.value), q: 1}))];
+  const b = {id: 'B2026' + String(db.borrows.length + 901).padStart(4, '0'), member: db.session, items, from, due, deposit: calcPrice(), status: 'borrowing'};
+  items.forEach(i => eqOf(i.e).avail -= i.q);
+  db.borrows.push(b); save(); closeModal(); view = 'history'; render();
+  alert('ยืมสำเร็จ รหัสการยืม ' + b.id);
+});
+
+function returnItem(id) {
+  const b = db.borrows.find(x => x.id === id); if (!b || b.status !== 'borrowing') return;
+  const late = daysLate(b.due), fine = late * FINE * mainQty(b);
+  if (!confirm(`รับคืน ${b.id}${late ? ` (เลยกำหนด ${late} วัน ค่าปรับ ฿${fine})` : ''} ?`)) return;
+  b.status = 'returned'; b.items.forEach(i => eqOf(i.e).avail += i.q);
+  db.returns.push({id: db.returns.length + 1, borrow: b.id, date: today(), status: late ? 'overdue' : 'normal', fine, by: db.session});
+  save(); render();
+}
+
+/* ===== เริ่มระบบ ===== */
+(async () => {
+  try { db = JSON.parse(localStorage.getItem(K)); } catch (e) {}
+  if (!db) { db = await seed(); save(); }
+  render();
+})();
+</script>
+</body>
+</html>
